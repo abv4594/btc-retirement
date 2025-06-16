@@ -1,4 +1,4 @@
-// Step 1–4: Retirement Inputs + Model Selection + BTC Required Calculation + Chart
+// Step 1–4: Retirement Inputs + Model Selection + BTC Required Calculation + Chart with Inflation & Retirement Years
 "use client";
 
 import { useState } from "react";
@@ -19,6 +19,8 @@ export default function RetirementStep1() {
   const [monthlyIncome, setMonthlyIncome] = useState(3000);
   const [retirementYear, setRetirementYear] = useState(new Date().getFullYear() + 20);
   const [model, setModel] = useState("cagr_20");
+  const [inflationRate, setInflationRate] = useState(0.02);
+  const [retirementYears, setRetirementYears] = useState(25);
   const [btcRequired, setBtcRequired] = useState(null);
   const [btcData, setBtcData] = useState(null);
 
@@ -26,7 +28,7 @@ export default function RetirementStep1() {
   const yearsToRetirement = retirementYear - currentYear;
 
   const getProjectedBTCPrice = (yearOffset) => {
-    const baseBTCPrice = 70000; // Current BTC price in USD
+    const baseBTCPrice = 70000;
     const y = yearOffset !== undefined ? yearOffset : yearsToRetirement;
     switch (model) {
       case "cagr_15":
@@ -36,26 +38,32 @@ export default function RetirementStep1() {
       case "cagr_30":
         return baseBTCPrice * Math.pow(1.30, y);
       default:
-        return baseBTCPrice * Math.pow(1.20, y); // fallback
+        return baseBTCPrice * Math.pow(1.20, y);
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (monthlyIncome > 0 && retirementYear >= currentYear) {
-      const annualIncome = monthlyIncome * 12;
-      const projectedBTCPrice = getProjectedBTCPrice();
-      const btc = annualIncome / projectedBTCPrice;
-      setBtcRequired(btc);
+      const annualIncomeToday = monthlyIncome * 12;
 
       const labels = [];
       const btcNeeded = [];
-      for (let i = 0; i <= yearsToRetirement; i++) {
-        const year = currentYear + i;
+      let totalBTC = 0;
+
+      for (let i = 0; i < retirementYears; i++) {
+        const year = retirementYear + i;
         labels.push(year);
-        const price = getProjectedBTCPrice(i);
-        btcNeeded.push(annualIncome / price);
+
+        const yearsSinceToday = year - currentYear;
+        const inflatedIncome = annualIncomeToday * Math.pow(1 + inflationRate, yearsSinceToday);
+        const btcPrice = getProjectedBTCPrice(yearsSinceToday);
+        const btcForYear = inflatedIncome / btcPrice;
+        btcNeeded.push(btcForYear);
+        totalBTC += btcForYear;
       }
+
+      setBtcRequired(totalBTC);
       setBtcData({
         labels,
         datasets: [
@@ -76,7 +84,7 @@ export default function RetirementStep1() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-white text-gray-900 px-4">
       <h1 className="text-3xl font-bold mb-4">Step 1: Retirement Planning</h1>
       <p className="mb-6 text-center max-w-md">
-        Let’s get started. How much would you want per month in retirement, when do you want to retire, and which model should we use to forecast BTC growth?
+        Let’s get started. Estimate your monthly income need, when you’d like to retire, expected inflation, and how long you’d like retirement to last.
       </p>
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
         <div>
@@ -99,6 +107,29 @@ export default function RetirementStep1() {
             onChange={(e) => setRetirementYear(parseInt(e.target.value))}
             className="w-full border px-4 py-2 rounded"
             min={currentYear}
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-2 font-semibold">Inflation Rate (e.g. 0.02 = 2%)</label>
+          <input
+            type="number"
+            value={inflationRate}
+            onChange={(e) => setInflationRate(parseFloat(e.target.value))}
+            className="w-full border px-4 py-2 rounded"
+            step={0.01}
+            min={0}
+            required
+          />
+        </div>
+        <div>
+          <label className="block mb-2 font-semibold">Years in Retirement</label>
+          <input
+            type="number"
+            value={retirementYears}
+            onChange={(e) => setRetirementYears(parseInt(e.target.value))}
+            className="w-full border px-4 py-2 rounded"
+            min={1}
             required
           />
         </div>
@@ -127,7 +158,7 @@ export default function RetirementStep1() {
 
       {btcRequired !== null && (
         <div className="mt-10 text-center w-full max-w-xl">
-          <h2 className="text-xl font-semibold mb-2">Estimated BTC Required Per Year</h2>
+          <h2 className="text-xl font-semibold mb-2">Total BTC Required for Retirement</h2>
           <p className="text-lg mb-6">≈ {btcRequired.toFixed(4)} BTC</p>
           {typeof window !== "undefined" && btcData && (
             <Line
