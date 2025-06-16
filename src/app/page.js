@@ -20,7 +20,7 @@ export default function RetirementStep1({ onNext }) {
   const [retirementYear, setRetirementYear] = useState(new Date().getFullYear() + 20);
   const [model, setModel] = useState("cagr_20");
   const [btcRequired, setBtcRequired] = useState(null);
-  const [btcData, setBtcData] = useState([]);
+  const [btcData, setBtcData] = useState(null);
 
   const currentYear = new Date().getFullYear();
   const yearsToRetirement = retirementYear - currentYear;
@@ -57,14 +57,19 @@ export default function RetirementStep1({ onNext }) {
         const price = getProjectedBTCPrice(i);
         btcNeeded.push(annualIncome / price);
       }
-      setBtcData({ labels, datasets: [{
-        label: "BTC Required Per Year",
-        data: btcNeeded,
-        borderColor: "#1E40AF",
-        backgroundColor: "rgba(30,64,175,0.2)",
-        tension: 0.3,
-        fill: true
-      }] });
+      setBtcData({
+        labels,
+        datasets: [
+          {
+            label: "BTC Required Per Year",
+            data: btcNeeded,
+            borderColor: "#1E40AF",
+            backgroundColor: "rgba(30,64,175,0.2)",
+            tension: 0.3,
+            fill: true
+          }
+        ]
+      });
     }
   };
 
@@ -125,7 +130,7 @@ export default function RetirementStep1({ onNext }) {
         <div className="mt-10 text-center w-full max-w-xl">
           <h2 className="text-xl font-semibold mb-2">Estimated BTC Required Per Year</h2>
           <p className="text-lg mb-6">≈ {btcRequired.toFixed(4)} BTC</p>
-          {btcData.labels && (
+          {btcData && (
             <Line
               data={btcData}
               options={{
