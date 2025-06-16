@@ -15,7 +15,7 @@ import {
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend);
 
-export default function RetirementStep1({ onNext }) {
+export default function RetirementStep1() {
   const [monthlyIncome, setMonthlyIncome] = useState(3000);
   const [retirementYear, setRetirementYear] = useState(new Date().getFullYear() + 20);
   const [model, setModel] = useState("cagr_20");
@@ -47,7 +47,6 @@ export default function RetirementStep1({ onNext }) {
       const projectedBTCPrice = getProjectedBTCPrice();
       const btc = annualIncome / projectedBTCPrice;
       setBtcRequired(btc);
-      onNext({ monthlyIncome, retirementYear, model, btcRequired: btc });
 
       const labels = [];
       const btcNeeded = [];
@@ -130,7 +129,7 @@ export default function RetirementStep1({ onNext }) {
         <div className="mt-10 text-center w-full max-w-xl">
           <h2 className="text-xl font-semibold mb-2">Estimated BTC Required Per Year</h2>
           <p className="text-lg mb-6">≈ {btcRequired.toFixed(4)} BTC</p>
-          {btcData && (
+          {typeof window !== "undefined" && btcData && (
             <Line
               data={btcData}
               options={{
